@@ -1,22 +1,24 @@
 // main.ts - main entry point for the Obsidian Prettier plugin
 
-import { Plugin, Notice } from "obsidian";
+import { Plugin, Notice, TFile } from "obsidian";
 import { Logger, LogLevel } from "./logger";
 import { Formatter } from "./format";
 import { ConfigManager, PrettierPluginSettings } from "./config";
 import { PrettierSettingsTab } from "./settings";
+import { EventManager } from "./events";
 
 const DEFAULT_SETTINGS: PrettierPluginSettings = {
     logLevel: LogLevel.ERROR,
     prettierOptions: {},
+    formatOnSave: false,
 };
 
 export default class PrettierPlugin extends Plugin {
     settings: PrettierPluginSettings;
 
-    private configManager: ConfigManager;
-    private formatter: Formatter;
-
+    private configManager: ConfigManager = new ConfigManager(this.app);
+    private formatter: Formatter = new Formatter(this.app);
+    private eventManager: EventManager = new EventManager(this.app);
     private logger: Logger = Logger.getLogger("main");
 
     async onload() {
@@ -28,17 +30,22 @@ export default class PrettierPlugin extends Plugin {
             id: "format-current-file",
             name: "Format current file with Prettier",
             editorCallback: async (_editor, _view) => {
-                await this.formatCurrentFile();
+                const file = this.app.workspace.getActiveFile();
+                if (file) await this.formatFile(file);
             },
         });
 
-        this.configManager = new ConfigManager(this.app);
-        this.formatter = new Formatter(this.app);
+        this.eventManager.onModify(async (file) => {
+            if (this.settings.formatOnSave) {
+                await this.formatFile(file);
+            }
+        });
 
         this.logger.info("Plugin loaded");
     }
 
     async onunload() {
+        this.eventManager.clearEvents();
         this.logger.info("Plugin unloaded");
     }
 
@@ -58,15 +65,8 @@ export default class PrettierPlugin extends Plugin {
         Logger.setGlobalLogLevel(this.settings.logLevel);
     }
 
-    private async formatCurrentFile() {
-        const file = this.app.workspace.getActiveFile();
-
-        if (!file) {
-            this.logger.warn("No active file to format");
-            return;
-        }
-
-        this.logger.debug(`Formatting active file: ${file.path}`);
+    private async formatFile(file: TFile) {
+        this.logger.debug(`Applying format to file: ${file.path}`);
 
         const prettierOptions = await this.configManager.getEffectivePrettierOptions(
             this.settings.prettierOptions

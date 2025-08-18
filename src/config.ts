@@ -7,6 +7,7 @@ import { Options } from "prettier";
 export interface PrettierPluginSettings {
     logLevel: LogLevel;
     prettierOptions: Options;
+    formatOnSave: boolean;
 }
 
 export class ConfigManager {
