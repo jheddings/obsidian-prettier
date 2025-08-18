@@ -5,7 +5,6 @@ import { Logger, LogLevel } from "./logger";
 import { Formatter } from "./format";
 import { ConfigManager, PrettierPluginSettings } from "./config";
 import { PrettierSettingsTab } from "./settings";
-import { EventManager } from "./events";
 
 const DEFAULT_SETTINGS: PrettierPluginSettings = {
     logLevel: LogLevel.ERROR,
@@ -18,7 +17,6 @@ export default class PrettierPlugin extends Plugin {
 
     private configManager: ConfigManager = new ConfigManager(this.app);
     private formatter: Formatter = new Formatter(this.app);
-    private eventManager: EventManager = new EventManager(this.app);
     private logger: Logger = Logger.getLogger("main");
 
     async onload() {
@@ -35,17 +33,18 @@ export default class PrettierPlugin extends Plugin {
             },
         });
 
-        this.eventManager.onModify(async (file) => {
-            if (this.settings.formatOnSave) {
-                await this.formatFile(file);
-            }
-        });
+        this.registerEvent(
+            this.app.vault.on("modify", async (file) => {
+                if (file instanceof TFile && this.settings.formatOnSave) {
+                    await this.formatFile(file);
+                }
+            })
+        );
 
         this.logger.info("Plugin loaded");
     }
 
     async onunload() {
-        this.eventManager.clearEvents();
         this.logger.info("Plugin unloaded");
     }
 
