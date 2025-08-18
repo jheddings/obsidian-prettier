@@ -8,13 +8,7 @@ import { PrettierSettingsTab } from "./settings";
 
 const DEFAULT_SETTINGS: PrettierPluginSettings = {
     logLevel: LogLevel.ERROR,
-
-    prettierOptions: {
-        proseWrap: "preserve",
-        endOfLine: "lf",
-        embeddedLanguageFormatting: "auto",
-        htmlWhitespaceSensitivity: "css",
-    },
+    prettierOptions: {},
 };
 
 export default class PrettierPlugin extends Plugin {
