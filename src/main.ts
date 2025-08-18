@@ -1,9 +1,10 @@
 // main.js - main entry point for the Obsidian Prettier plugin
 
-import { Plugin, Notice, Editor } from "obsidian";
+import { Plugin, Notice } from "obsidian";
 import { Logger, LogLevel } from "./logger";
-import { format } from "./format";
+import { Formatter } from "./format";
 import { ConfigManager, PrettierPluginSettings } from "./config";
+import { PrettierSettingsTab } from "./settings";
 
 const DEFAULT_SETTINGS: PrettierPluginSettings = {
     logLevel: LogLevel.ERROR,
@@ -18,21 +19,27 @@ const DEFAULT_SETTINGS: PrettierPluginSettings = {
 export default class PrettierPlugin extends Plugin {
     settings: PrettierPluginSettings;
 
-    private configManager: any;
+    private configManager: ConfigManager;
+    private formatter: Formatter;
+
     private logger: Logger = Logger.getLogger("main");
 
     async onload() {
         await this.loadSettings();
 
+        this.addSettingTab(new PrettierSettingsTab(this.app, this));
+
         this.addCommand({
             id: "format-current-file",
             name: "Format current file with Prettier",
-            editorCallback: async (editor, _view) => {
-                await this.formatCurrentFile(editor);
+            editorCallback: async (_editor, _view) => {
+                await this.formatCurrentFile();
             },
         });
 
         this.configManager = new ConfigManager(this.app);
+        this.formatter = new Formatter(this.app);
+
         this.logger.info("Plugin loaded");
     }
 
@@ -56,7 +63,7 @@ export default class PrettierPlugin extends Plugin {
         Logger.setGlobalLogLevel(this.settings.logLevel);
     }
 
-    private async formatCurrentFile(editor: Editor) {
+    private async formatCurrentFile() {
         const file = this.app.workspace.getActiveFile();
 
         if (!file) {
@@ -64,22 +71,17 @@ export default class PrettierPlugin extends Plugin {
             return;
         }
 
-        const content = editor.getValue();
-        const filePath = file.path;
+        const prettierOptions = await this.configManager.getEffectivePrettierOptions(
+            this.settings.prettierOptions
+        );
 
         try {
-            const prettierOptions = this.configManager.getEffectivePrettierOptions(
-                this.settings.prettierOptions
-            );
-            const formattedContent = await format(content, prettierOptions);
+            const changed = await this.formatter.formatFile(file, prettierOptions);
 
-            if (content !== formattedContent) {
-                editor.setValue(formattedContent);
+            if (changed) {
                 new Notice(`Formatted ${file.name} with Prettier`);
-                this.logger.info(`Formatted file: ${filePath}`);
             } else {
                 new Notice(`${file.name} is already formatted`);
-                this.logger.debug(`No changes needed for file: ${filePath}`);
             }
         } catch (error) {
             const errorMessage = `Failed to format file: ${error.message}`;
