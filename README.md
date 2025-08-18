@@ -1,3 +1,3 @@
-# obsidian-skel
+# obsidian-prettier
 
-This is a skeleton / template for making new Obsidian plugins.
+Format Obsidian vault content using [Prettier](https://prettier.io).

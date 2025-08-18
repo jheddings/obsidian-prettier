@@ -9,7 +9,7 @@ export enum LogLevel {
 }
 
 export class Logger {
-    private static PREFIX = "skel";
+    private static PREFIX = "prettier";
 
     private static loggers: Map<string, Logger> = new Map();
     private static globalLogLevel: LogLevel = LogLevel.ERROR;

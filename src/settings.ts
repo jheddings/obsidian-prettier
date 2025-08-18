@@ -1,8 +1,8 @@
 import { PluginSettingTab, App } from "obsidian";
-import SkeletonPlugin from "./main";
+import PrettierPlugin from "./main";
 
-export class SkeleSettingsTab extends PluginSettingTab {
-    constructor(app: App, plugin: SkeletonPlugin) {
+export class PrettierSettingsTab extends PluginSettingTab {
+    constructor(app: App, plugin: PrettierPlugin) {
         super(app, plugin);
     }
 

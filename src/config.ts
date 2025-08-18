@@ -1,7 +1,7 @@
-// config model for the Obsidian Skeleton plugin
+// config model for the Obsidian Prettier plugin
 
 import { LogLevel } from "./logger";
 
-export interface SkeletonPluginSettings {
+export interface PrettierPluginSettings {
     logLevel: LogLevel;
 }

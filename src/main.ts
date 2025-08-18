@@ -1,13 +1,15 @@
+// main.js - main entry point for the Obsidian Prettier plugin
+
 import { Plugin } from "obsidian";
 import { Logger, LogLevel } from "./logger";
-import { SkeletonPluginSettings } from "./config";
+import { PrettierPluginSettings } from "./config";
 
-const DEFAULT_SETTINGS: SkeletonPluginSettings = {
+const DEFAULT_SETTINGS: PrettierPluginSettings = {
     logLevel: LogLevel.ERROR,
 };
 
-export default class SkeletonPlugin extends Plugin {
-    settings: SkeletonPluginSettings;
+export default class PrettierPlugin extends Plugin {
+    settings: PrettierPluginSettings;
 
     private logger: Logger = Logger.getLogger("main");
 
