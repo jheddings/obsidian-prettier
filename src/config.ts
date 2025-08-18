@@ -1,6 +1,6 @@
 // config model for the Obsidian Prettier plugin
 
-import { App } from "obsidian";
+import { App, normalizePath } from "obsidian";
 import { Logger, LogLevel } from "./logger";
 import { Options } from "prettier";
 
@@ -21,31 +21,25 @@ export class ConfigManager {
         const options = { ...userPrefs };
 
         // look for vault files to override plugin settings
-        const configPaths = [".prettierrc", ".prettierrc.json", "prettierrc.json"];
+        const localConfigFiles = [".prettierrc", ".prettierrc.json", "prettierrc.json"];
 
-        for (const configPath of configPaths) {
+        for (const localConfig of localConfigFiles) {
             try {
-                const file = this.app.vault.getFileByPath(configPath);
-                const configContent = await this.app.vault.read(file);
+                const normPath = normalizePath(localConfig);
+                this.logger.debug(`Checking for local config :: ${normPath}`);
 
-                let configOptions;
+                // use the vault adapter to access files directly, including hidden files
+                const exists = await this.app.vault.adapter.exists(normPath);
+                if (!exists) continue;
 
-                try {
-                    configOptions = JSON.parse(configContent);
-                } catch {
-                    // If not JSON, skip for now (could add YAML support later)
-                    this.logger.warn(`Unsupported config format in ${configPath}, skipping`);
-                    continue;
-                }
+                const configContent = await this.app.vault.adapter.read(normPath);
+                const configOptions = JSON.parse(configContent);
+                this.logger.debug(`Loaded Prettier config from ${localConfig}`);
 
-                // Merge config file options with plugin options (config file takes precedence)
-                this.logger.debug(`Loaded Prettier config from ${configPath}`);
                 Object.assign(options, configOptions);
-
-                break;
             } catch (error) {
                 // config file doesn't exist or can't be read, continue to next
-                this.logger.debug(`Could not read config from ${configPath}: ${error.message}`);
+                this.logger.debug(`Could not read config from ${localConfig}: ${error.message}`);
             }
         }
 

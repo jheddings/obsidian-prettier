@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS: PrettierPluginSettings = {
 
     prettierOptions: {
         proseWrap: "preserve",
+        endOfLine: "lf",
         embeddedLanguageFormatting: "auto",
         htmlWhitespaceSensitivity: "css",
     },
@@ -71,6 +72,8 @@ export default class PrettierPlugin extends Plugin {
             return;
         }
 
+        this.logger.debug(`Formatting active file: ${file.path}`);
+
         const prettierOptions = await this.configManager.getEffectivePrettierOptions(
             this.settings.prettierOptions
         );
@@ -80,8 +83,10 @@ export default class PrettierPlugin extends Plugin {
 
             if (changed) {
                 new Notice(`Formatted ${file.name} with Prettier`);
+                this.logger.info(`File was changed: ${file.path}`);
             } else {
                 new Notice(`${file.name} is already formatted`);
+                this.logger.debug(`File was not changed: ${file.path}`);
             }
         } catch (error) {
             const errorMessage = `Failed to format file: ${error.message}`;
