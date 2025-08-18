@@ -1,4 +1,4 @@
-// config model for the Obsidian Prettier plugin
+// config.ts - config models for the Obsidian Prettier plugin
 
 import { App, normalizePath } from "obsidian";
 import { Logger, LogLevel } from "./logger";

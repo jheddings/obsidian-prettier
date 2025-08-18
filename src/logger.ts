@@ -1,4 +1,4 @@
-// basic logging framework for Obsidian
+// logger.ts - basic logging framework for the Obsidian Prettier plugin
 
 export enum LogLevel {
     DEBUG = 30,

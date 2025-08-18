@@ -1,4 +1,4 @@
-// main.js - main entry point for the Obsidian Prettier plugin
+// main.ts - main entry point for the Obsidian Prettier plugin
 
 import { Plugin, Notice } from "obsidian";
 import { Logger, LogLevel } from "./logger";

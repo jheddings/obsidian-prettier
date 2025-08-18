@@ -1,3 +1,5 @@
+// settings.ts - settings UI for the Obsidian Prettier plugin
+
 import { PluginSettingTab, App, Setting } from "obsidian";
 import { LogLevel } from "./logger";
 import PrettierPlugin from "./main";
