@@ -56,12 +56,55 @@ class GeneralSettings extends SettingsTabPage {
      */
     display(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName("Auto format")
-            .setDesc("Automatically keep files formatted when changed")
+            .setName("Tab width")
+            .setDesc("Number of spaces per indentation level")
+            .addSlider((slider) => {
+                slider.setLimits(1, 8, 1);
+                slider.setValue(this._plugin.settings.prettierOptions.tabWidth ?? 2);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    this._plugin.settings.prettierOptions.tabWidth = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Use tabs")
+            .setDesc("Use tabs instead of spaces for indentation")
             .addToggle((toggle) => {
-                toggle.setValue(this._plugin.settings.autoFormat);
+                toggle.setValue(this._plugin.settings.prettierOptions.useTabs ?? false);
                 toggle.onChange(async (value) => {
-                    this._plugin.settings.autoFormat = value;
+                    this._plugin.settings.prettierOptions.useTabs = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Print width")
+            .setDesc("Line length that the printer will wrap on")
+            .addSlider((slider) => {
+                slider.setLimits(40, 200, 1);
+                slider.setValue(this._plugin.settings.prettierOptions.printWidth ?? 80);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    this._plugin.settings.prettierOptions.printWidth = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Prose wrap")
+            .setDesc("How to wrap prose (markdown text)")
+            .addDropdown((dropdown) => {
+                dropdown.addOption("always", "Always");
+                dropdown.addOption("never", "Never");
+                dropdown.addOption("preserve", "Preserve");
+                dropdown.setValue(this._plugin.settings.prettierOptions.proseWrap ?? "preserve");
+                dropdown.onChange(async (value) => {
+                    this._plugin.settings.prettierOptions.proseWrap = value as
+                        | "always"
+                        | "never"
+                        | "preserve";
                     await this._plugin.saveSettings();
                 });
             });
@@ -83,6 +126,17 @@ class AdvancedSettings extends SettingsTabPage {
      * Displays the advanced settings UI.
      */
     display(containerEl: HTMLElement): void {
+        new Setting(containerEl)
+            .setName("Auto format")
+            .setDesc("Automatically keep files formatted when changed")
+            .addToggle((toggle) => {
+                toggle.setValue(this._plugin.settings.autoFormat);
+                toggle.onChange(async (value) => {
+                    this._plugin.settings.autoFormat = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
         new Setting(containerEl)
             .setName("Log level")
             .setDesc("Set the logging level for debug output")
