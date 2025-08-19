@@ -38,6 +38,28 @@ abstract class SettingsTabPage {
     }
 
     abstract display(containerEl: HTMLElement): void;
+
+    /**
+     * Creates a linked setting name that opens the Prettier documentation.
+     */
+    protected generatePrettierLink(name: string, option: string): DocumentFragment {
+        return this.generateLinkElement(name, `https://prettier.io/docs/en/options.html#${option}`);
+    }
+
+    /**
+     * Creates a linked setting name that opens in the default browser.
+     */
+    protected generateLinkElement(name: string, docUrl: string): DocumentFragment {
+        const fragment = document.createDocumentFragment();
+        const link = document.createElement("a");
+
+        link.href = docUrl;
+        link.textContent = name;
+        link.className = "external-link";
+
+        fragment.appendChild(link);
+        return fragment;
+    }
 }
 
 /**
@@ -56,7 +78,7 @@ class GeneralSettings extends SettingsTabPage {
      */
     display(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName("Tab width")
+            .setName(this.generatePrettierLink("Tab width", "tab-width"))
             .setDesc("Number of spaces per indentation level")
             .addSlider((slider) => {
                 slider.setLimits(1, 8, 1);
@@ -69,7 +91,7 @@ class GeneralSettings extends SettingsTabPage {
             });
 
         new Setting(containerEl)
-            .setName("Use tabs")
+            .setName(this.generatePrettierLink("Use tabs", "tabs"))
             .setDesc("Use tabs instead of spaces for indentation")
             .addToggle((toggle) => {
                 toggle.setValue(this._plugin.settings.prettierOptions.useTabs ?? false);
@@ -80,7 +102,7 @@ class GeneralSettings extends SettingsTabPage {
             });
 
         new Setting(containerEl)
-            .setName("Print width")
+            .setName(this.generatePrettierLink("Print width", "print-width"))
             .setDesc("Line length that the printer will wrap on")
             .addSlider((slider) => {
                 slider.setLimits(40, 200, 1);
@@ -93,7 +115,7 @@ class GeneralSettings extends SettingsTabPage {
             });
 
         new Setting(containerEl)
-            .setName("Prose wrap")
+            .setName(this.generatePrettierLink("Prose wrap", "prose-wrap"))
             .setDesc("How to wrap prose (markdown text)")
             .addDropdown((dropdown) => {
                 dropdown.addOption("always", "Always");
