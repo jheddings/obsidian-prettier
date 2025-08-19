@@ -20,6 +20,17 @@ export class PrettierSettingsTab extends PluginSettingTab {
         containerEl.empty();
 
         new Setting(containerEl)
+            .setName("Auto format")
+            .setDesc("Automatically keep files formatted when changed")
+            .addToggle((toggle) => {
+                toggle.setValue(this.plugin.settings.autoFormat);
+                toggle.onChange(async (value) => {
+                    this.plugin.settings.autoFormat = value;
+                    await this.plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
             .setName("Log level")
             .setDesc("Set the logging level for debug output")
             .addDropdown((dropdown) => {
