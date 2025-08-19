@@ -9,8 +9,10 @@ import { PrettierSettingsTab } from "./settings";
 const DEFAULT_SETTINGS: PrettierPluginSettings = {
     logLevel: LogLevel.ERROR,
     prettierOptions: {},
-    formatOnSave: false,
+    autoFormat: false,
 };
+
+const AUTO_FORMAT_DELAY_MS = 2500;
 
 export default class PrettierPlugin extends Plugin {
     settings: PrettierPluginSettings;
@@ -18,6 +20,9 @@ export default class PrettierPlugin extends Plugin {
     private configManager: ConfigManager = new ConfigManager(this.app);
     private formatter: Formatter = new Formatter(this.app);
     private logger: Logger = Logger.getLogger("main");
+
+    private autoFormatMap: Map<TFile, NodeJS.Timeout> = new Map();
+    private lastActiveFile: TFile | null = null;
 
     async onload() {
         await this.loadSettings();
@@ -33,10 +38,20 @@ export default class PrettierPlugin extends Plugin {
             },
         });
 
+        /*
         this.registerEvent(
             this.app.vault.on("modify", async (file) => {
-                if (file instanceof TFile && this.settings.formatOnSave) {
-                    await this.formatFile(file);
+                if (file instanceof TFile && this.settings.autoFormat) {
+                    this.scheduleAutoFormat(file);
+                }
+            })
+        );
+        */
+
+        this.registerEvent(
+            this.app.workspace.on("active-leaf-change", async () => {
+                if (this.settings.autoFormat) {
+                    await this.handleFocusChange();
                 }
             })
         );
@@ -45,6 +60,11 @@ export default class PrettierPlugin extends Plugin {
     }
 
     async onunload() {
+        for (const [file, timeout] of this.autoFormatMap) {
+            clearTimeout(timeout);
+            await this.formatFile(file);
+        }
+
         this.logger.info("Plugin unloaded");
     }
 
@@ -86,5 +106,30 @@ export default class PrettierPlugin extends Plugin {
             new Notice(errorMessage);
             this.logger.error(errorMessage, error);
         }
+    }
+
+    private scheduleAutoFormat(file: TFile) {
+        const existingTimeout = this.autoFormatMap.get(file);
+        if (existingTimeout) {
+            clearTimeout(existingTimeout);
+        }
+
+        this.autoFormatMap.set(
+            file,
+            setTimeout(async () => {
+                this.autoFormatMap.delete(file);
+                await this.formatFile(file);
+            }, AUTO_FORMAT_DELAY_MS)
+        );
+    }
+
+    private async handleFocusChange() {
+        const currentActiveFile = this.app.workspace.getActiveFile();
+
+        if (this.lastActiveFile && this.lastActiveFile !== currentActiveFile) {
+            await this.formatFile(this.lastActiveFile);
+        }
+
+        this.lastActiveFile = currentActiveFile;
     }
 }
