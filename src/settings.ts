@@ -21,7 +21,7 @@ export class PrettierSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Format on save")
-            .setDesc("Automatically format files when they are saved")
+            .setDesc("Automatically keep files formatted when changed")
             .addToggle((toggle) => {
                 toggle.setValue(this.plugin.settings.formatOnSave);
                 toggle.onChange(async (value) => {
