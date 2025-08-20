@@ -4,6 +4,131 @@ import { PluginSettingTab, App, Setting } from "obsidian";
 import { LogLevel } from "./logger";
 import PrettierPlugin from "./main";
 
+function generateLinkElement(name: string, docUrl: string): DocumentFragment {
+    const fragment = document.createDocumentFragment();
+    const link = document.createElement("a");
+
+    link.href = docUrl;
+    link.textContent = name;
+    link.className = "external-link";
+
+    fragment.appendChild(link);
+    return fragment;
+}
+
+function generatePrettierLink(name: string, option: string): DocumentFragment {
+    return generateLinkElement(name, `https://prettier.io/docs/en/options.html#${option}`);
+}
+
+interface SettingConfig {
+    name: string | DocumentFragment;
+    description: string;
+}
+
+/**
+ * Base class for reusable setting elements.
+ */
+abstract class BaseSetting<T = any> {
+    protected name: string | DocumentFragment;
+    protected description: string;
+
+    constructor(config: SettingConfig) {
+        this.name = config.name;
+        this.description = config.description;
+    }
+
+    abstract get value(): T;
+
+    abstract set value(val: T);
+
+    abstract get default(): T;
+
+    /**
+     * Creates the setting element in the provided container.
+     */
+    abstract display(containerEl: HTMLElement): Setting;
+}
+
+/**
+ * Toggle setting for boolean values.
+ */
+abstract class ToggleSetting extends BaseSetting<boolean> {
+    display(containerEl: HTMLElement): Setting {
+        return new Setting(containerEl)
+            .setName(this.name)
+            .setDesc(this.description)
+            .addToggle((toggle) => {
+                toggle.setValue(this.value);
+                toggle.onChange(async (value) => {
+                    this.value = value;
+                });
+            });
+    }
+}
+
+/**
+ * Slider setting for numeric values.
+ */
+abstract class SliderSetting extends BaseSetting<number> {
+    display(containerEl: HTMLElement): Setting {
+        return new Setting(containerEl)
+            .setName(this.name)
+            .setDesc(this.description)
+            .addSlider((slider) => {
+                slider.setLimits(this.minimum, this.maximum, this.step);
+                slider.setDynamicTooltip();
+                slider.setValue(this.value);
+                slider.onChange(async (value) => {
+                    this.value = value;
+                });
+            });
+    }
+
+    abstract get minimum(): number;
+
+    abstract get maximum(): number;
+
+    abstract get step(): number;
+}
+
+/**
+ * Dropdown setting for enumerated values.
+ */
+abstract class DropdownSetting<T> extends BaseSetting<T> {
+    display(containerEl: HTMLElement): Setting {
+        return new Setting(containerEl)
+            .setName(this.name)
+            .setDesc(this.description)
+            .addDropdown((dropdown) => {
+                this.options.forEach(({ key, label }) => {
+                    dropdown.addOption(key, label);
+                });
+                dropdown.setValue(this.getKeyForValue(this.value));
+                dropdown.onChange(async (key) => {
+                    this.value = this.getValueForKey(key);
+                });
+            });
+    }
+
+    abstract get options(): { key: string; label: string; value: T }[];
+
+    /**
+     * Get the key for a given value.
+     */
+    protected getKeyForValue(value: T): string {
+        const option = this.options.find((opt) => opt.value === value);
+        return option?.key ?? this.options[0]?.key ?? "";
+    }
+
+    /**
+     * Get the value for a given key.
+     */
+    protected getValueForKey(key: string): T {
+        const option = this.options.find((opt) => opt.key === key);
+        return option?.value ?? this.options[0]?.value;
+    }
+}
+
 /**
  * Base class for settings tab pages.
  */
@@ -38,27 +163,205 @@ abstract class SettingsTabPage {
     }
 
     abstract display(containerEl: HTMLElement): void;
+}
 
-    /**
-     * Creates a linked setting name that opens the Prettier documentation.
-     */
-    protected generatePrettierLink(name: string, option: string): DocumentFragment {
-        return this.generateLinkElement(name, `https://prettier.io/docs/en/options.html#${option}`);
+/**
+ * Control the tab width user setting.
+ * https://prettier.io/docs/options#tab-width
+ */
+class TabWidthSetting extends SliderSetting {
+    constructor(private plugin: PrettierPlugin) {
+        super({
+            name: generatePrettierLink("Tab width", "tab-width"),
+            description: "Specify the number of spaces per indentation-level.",
+        });
     }
 
-    /**
-     * Creates a linked setting name that opens in the default browser.
-     */
-    protected generateLinkElement(name: string, docUrl: string): DocumentFragment {
-        const fragment = document.createDocumentFragment();
-        const link = document.createElement("a");
+    get value(): number {
+        return this.plugin.settings.prettierOptions.tabWidth ?? this.default;
+    }
 
-        link.href = docUrl;
-        link.textContent = name;
-        link.className = "external-link";
+    set value(val: number) {
+        this.plugin.settings.prettierOptions.tabWidth = val;
+        this.plugin.saveSettings();
+    }
 
-        fragment.appendChild(link);
-        return fragment;
+    get default(): number {
+        return 2;
+    }
+
+    get minimum(): number {
+        return 1;
+    }
+
+    get maximum(): number {
+        return 8;
+    }
+
+    get step(): number {
+        return 1;
+    }
+}
+
+/**
+ * Control the use-tab user setting.
+ * https://prettier.io/docs/options.html#tabs
+ */
+class UseTabsSetting extends ToggleSetting {
+    constructor(private plugin: PrettierPlugin) {
+        super({
+            name: generatePrettierLink("Use tabs", "tabs"),
+            description: "Indent lines with tabs instead of spaces.",
+        });
+    }
+
+    get value(): boolean {
+        return (this.plugin.settings.prettierOptions.useTabs as boolean) ?? false;
+    }
+
+    set value(val: boolean) {
+        this.plugin.settings.prettierOptions.useTabs = val;
+        this.plugin.saveSettings();
+    }
+
+    get default(): boolean {
+        return false;
+    }
+}
+
+/**
+ * Controls the print width user setting.
+ * https://prettier.io/docs/options.html#print-width
+ */
+class PrintWidthSetting extends SliderSetting {
+    constructor(private plugin: PrettierPlugin) {
+        super({
+            name: generatePrettierLink("Print width", "print-width"),
+            description: "Specify the line length that the printer will wrap on.",
+        });
+    }
+
+    get value(): number {
+        return (this.plugin.settings.prettierOptions.printWidth as number) ?? 80;
+    }
+
+    set value(val: number) {
+        this.plugin.settings.prettierOptions.printWidth = val;
+        this.plugin.saveSettings();
+    }
+
+    get default(): number {
+        return 80;
+    }
+
+    get minimum(): number {
+        return 1;
+    }
+
+    get maximum(): number {
+        return 200;
+    }
+
+    get step(): number {
+        return 1;
+    }
+}
+
+enum ProseWrapOptions {
+    ALWAYS = "always",
+    NEVER = "never",
+    PRESERVE = "preserve",
+}
+
+/**
+ * Controls the prose width user setting.
+ * https://prettier.io/docs/options.html#prose-wrap
+ */
+class ProseWrapSetting extends DropdownSetting<ProseWrapOptions> {
+    constructor(private plugin: PrettierPlugin) {
+        super({
+            name: generatePrettierLink("Prose wrap", "prose-wrap"),
+            description: "How to wrap prose (markdown text).",
+        });
+    }
+
+    get default(): ProseWrapOptions {
+        return ProseWrapOptions.PRESERVE;
+    }
+
+    get value(): ProseWrapOptions {
+        return (this.plugin.settings.prettierOptions.proseWrap as ProseWrapOptions) ?? this.default;
+    }
+
+    set value(val: ProseWrapOptions) {
+        this.plugin.settings.prettierOptions.proseWrap = val;
+        this.plugin.saveSettings();
+    }
+
+    get options(): { key: string; label: string; value: ProseWrapOptions }[] {
+        return Object.entries(ProseWrapOptions).map(([key, value]) => ({
+            key: value,
+            label: key,
+            value,
+        }));
+    }
+}
+
+/**
+ * Controls the auto format user setting.
+ */
+class AutoFormatSetting extends ToggleSetting {
+    constructor(private plugin: PrettierPlugin) {
+        super({
+            name: "Auto format",
+            description: "Automatically format files when they change.",
+        });
+    }
+
+    get value(): boolean {
+        return (this.plugin.settings.prettierOptions.autoFormat as boolean) ?? this.default;
+    }
+
+    set value(val: boolean) {
+        this.plugin.settings.prettierOptions.autoFormat = val;
+        this.plugin.saveSettings();
+    }
+
+    get default(): boolean {
+        return false;
+    }
+}
+
+/**
+ * Control the log level user setting.
+ */
+class LogLevelSetting extends DropdownSetting<LogLevel> {
+    constructor(private plugin: PrettierPlugin) {
+        super({
+            name: "Log level",
+            description: "Set the logging level for console output.",
+        });
+    }
+
+    get value(): LogLevel {
+        return this.plugin.settings.logLevel ?? this.default;
+    }
+
+    set value(val: LogLevel) {
+        this.plugin.settings.logLevel = val;
+        this.plugin.saveSettings();
+    }
+
+    get default(): LogLevel {
+        return LogLevel.INFO;
+    }
+
+    get options(): { key: string; label: string; value: LogLevel }[] {
+        return Object.entries(LogLevel).map(([key, value]) => ({
+            key: value.toString(),
+            label: key,
+            value: value as LogLevel,
+        }));
     }
 }
 
@@ -77,59 +380,10 @@ class GeneralSettings extends SettingsTabPage {
      * Displays the general settings UI.
      */
     display(containerEl: HTMLElement): void {
-        new Setting(containerEl)
-            .setName(this.generatePrettierLink("Tab width", "tab-width"))
-            .setDesc("Number of spaces per indentation level")
-            .addSlider((slider) => {
-                slider.setLimits(1, 8, 1);
-                slider.setValue(this._plugin.settings.prettierOptions.tabWidth ?? 2);
-                slider.setDynamicTooltip();
-                slider.onChange(async (value) => {
-                    this._plugin.settings.prettierOptions.tabWidth = value;
-                    await this._plugin.saveSettings();
-                });
-            });
-
-        new Setting(containerEl)
-            .setName(this.generatePrettierLink("Use tabs", "tabs"))
-            .setDesc("Use tabs instead of spaces for indentation")
-            .addToggle((toggle) => {
-                toggle.setValue(this._plugin.settings.prettierOptions.useTabs ?? false);
-                toggle.onChange(async (value) => {
-                    this._plugin.settings.prettierOptions.useTabs = value;
-                    await this._plugin.saveSettings();
-                });
-            });
-
-        new Setting(containerEl)
-            .setName(this.generatePrettierLink("Print width", "print-width"))
-            .setDesc("Line length that the printer will wrap on")
-            .addSlider((slider) => {
-                slider.setLimits(40, 200, 1);
-                slider.setValue(this._plugin.settings.prettierOptions.printWidth ?? 80);
-                slider.setDynamicTooltip();
-                slider.onChange(async (value) => {
-                    this._plugin.settings.prettierOptions.printWidth = value;
-                    await this._plugin.saveSettings();
-                });
-            });
-
-        new Setting(containerEl)
-            .setName(this.generatePrettierLink("Prose wrap", "prose-wrap"))
-            .setDesc("How to wrap prose (markdown text)")
-            .addDropdown((dropdown) => {
-                dropdown.addOption("always", "Always");
-                dropdown.addOption("never", "Never");
-                dropdown.addOption("preserve", "Preserve");
-                dropdown.setValue(this._plugin.settings.prettierOptions.proseWrap ?? "preserve");
-                dropdown.onChange(async (value) => {
-                    this._plugin.settings.prettierOptions.proseWrap = value as
-                        | "always"
-                        | "never"
-                        | "preserve";
-                    await this._plugin.saveSettings();
-                });
-            });
+        new TabWidthSetting(this._plugin).display(containerEl);
+        new UseTabsSetting(this._plugin).display(containerEl);
+        new PrintWidthSetting(this._plugin).display(containerEl);
+        new ProseWrapSetting(this._plugin).display(containerEl);
     }
 }
 
@@ -148,31 +402,8 @@ class AdvancedSettings extends SettingsTabPage {
      * Displays the advanced settings UI.
      */
     display(containerEl: HTMLElement): void {
-        new Setting(containerEl)
-            .setName("Auto format")
-            .setDesc("Automatically keep files formatted when changed")
-            .addToggle((toggle) => {
-                toggle.setValue(this._plugin.settings.autoFormat);
-                toggle.onChange(async (value) => {
-                    this._plugin.settings.autoFormat = value;
-                    await this._plugin.saveSettings();
-                });
-            });
-
-        new Setting(containerEl)
-            .setName("Log level")
-            .setDesc("Set the logging level for debug output")
-            .addDropdown((dropdown) => {
-                dropdown.addOption(LogLevel.ERROR.toString(), "Error");
-                dropdown.addOption(LogLevel.WARN.toString(), "Warning");
-                dropdown.addOption(LogLevel.INFO.toString(), "Info");
-                dropdown.addOption(LogLevel.DEBUG.toString(), "Debug");
-                dropdown.setValue(this._plugin.settings.logLevel.toString());
-                dropdown.onChange(async (value) => {
-                    this._plugin.settings.logLevel = parseInt(value) as LogLevel;
-                    await this._plugin.saveSettings();
-                });
-            });
+        new AutoFormatSetting(this._plugin).display(containerEl);
+        new LogLevelSetting(this._plugin).display(containerEl);
     }
 }
 
