@@ -350,7 +350,6 @@ abstract class SettingsTabPage {
 
     /**
      * Gets the tab page ID.
-     * @returns The tab page ID string.
      */
     get id(): string {
         return this._name.toLowerCase().replace(/\s+/g, "-");
@@ -358,7 +357,6 @@ abstract class SettingsTabPage {
 
     /**
      * Gets the tab page name.
-     * @returns The tab page name string.
      */
     get name(): string {
         return this._name;
