@@ -325,7 +325,7 @@ class LogLevelSetting extends DropdownSetting<LogLevel> {
             .filter(([_key, value]) => typeof value === "number")
             .map(([key, value]) => ({
                 key: key,
-                label: key,
+                label: key.toLowerCase(),
                 value: value as LogLevel,
             }));
     }
