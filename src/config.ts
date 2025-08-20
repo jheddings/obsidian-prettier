@@ -1,6 +1,6 @@
 // config.ts - config models for the Obsidian Prettier plugin
 
-import { App, normalizePath } from "obsidian";
+import { App, normalizePath, parseYaml } from "obsidian";
 import { Logger, LogLevel } from "./logger";
 import { Options } from "prettier";
 
@@ -12,27 +12,36 @@ export enum ProseWrapOptions {
 
 export interface PrettierPluginSettings {
     logLevel: LogLevel;
-    prettierOptions: Options;
     showNotices: boolean;
     autoFormat: boolean;
     autoFormatDebounceMs: number;
+    prettierOptions: Options;
 }
+
+const CONFIG_FILE_NAMES = [
+    ".prettierrc",
+    ".prettierrc.yaml",
+    ".prettierrc.yml",
+    ".prettierrc.json",
+    "prettier.yaml",
+    "prettier.yml",
+    "prettier.json",
+];
 
 export class ConfigManager {
     private app: App;
+
     private logger = Logger.getLogger("config");
 
     constructor(app: App) {
         this.app = app;
     }
 
-    async getEffectivePrettierOptions(userPrefs: Options): Promise<Options> {
-        const options = { ...userPrefs };
+    async getVaultConfig(): Promise<Options> {
+        const options = {};
 
         // look for vault files to override plugin settings
-        const localConfigFiles = [".prettierrc", ".prettierrc.json", "prettierrc.json"];
-
-        for (const localConfig of localConfigFiles) {
+        for (const localConfig of CONFIG_FILE_NAMES) {
             try {
                 const normPath = normalizePath(localConfig);
                 this.logger.debug(`Checking for local config :: ${normPath}`);
@@ -41,17 +50,29 @@ export class ConfigManager {
                 const exists = await this.app.vault.adapter.exists(normPath);
                 if (!exists) continue;
 
-                const configContent = await this.app.vault.adapter.read(normPath);
-                const configOptions = JSON.parse(configContent);
-                this.logger.debug(`Loaded Prettier config from ${localConfig}`);
-
+                const configOptions = await this.loadConfigFile(normPath);
                 Object.assign(options, configOptions);
             } catch (error) {
-                // config file doesn't exist or can't be read, continue to next
-                this.logger.debug(`Could not read config from ${localConfig}: ${error.message}`);
+                this.logger.warn(`Could not read config from ${localConfig}:`, error.message);
             }
         }
 
         return options;
+    }
+
+    private async loadConfigFile(vaultFilePath: string): Promise<Options> {
+        this.logger.debug("Loading config file:", vaultFilePath);
+
+        const configContent = await this.app.vault.adapter.read(vaultFilePath);
+
+        try {
+            return JSON.parse(configContent) as Options;
+        } catch {}
+
+        try {
+            return parseYaml(configContent) as Options;
+        } catch {}
+
+        throw Error("Invalid config format");
     }
 }
