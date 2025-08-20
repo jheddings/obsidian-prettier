@@ -2,6 +2,7 @@
 
 import { PluginSettingTab, App, Setting } from "obsidian";
 import { LogLevel } from "./logger";
+import { ProseWrapOptions } from "./config";
 import PrettierPlugin from "./main";
 
 function generateLinkElement(name: string, docUrl: string): DocumentFragment {
@@ -229,12 +230,6 @@ class PrintWidthSetting extends SliderSetting {
     get step(): number {
         return 1;
     }
-}
-
-enum ProseWrapOptions {
-    ALWAYS = "always",
-    NEVER = "never",
-    PRESERVE = "preserve",
 }
 
 /**

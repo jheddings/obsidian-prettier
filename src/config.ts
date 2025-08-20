@@ -4,6 +4,12 @@ import { App, normalizePath } from "obsidian";
 import { Logger, LogLevel } from "./logger";
 import { Options } from "prettier";
 
+export enum ProseWrapOptions {
+    ALWAYS = "always",
+    NEVER = "never",
+    PRESERVE = "preserve",
+}
+
 export interface PrettierPluginSettings {
     logLevel: LogLevel;
     prettierOptions: Options;
