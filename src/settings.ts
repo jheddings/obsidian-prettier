@@ -180,7 +180,7 @@ class UseTabsSetting extends ToggleSetting {
     }
 
     get value(): boolean {
-        return (this.plugin.settings.prettierOptions.useTabs as boolean) ?? false;
+        return (this.plugin.settings.prettierOptions.useTabs as boolean) ?? this.default;
     }
 
     set value(val: boolean) {
@@ -206,7 +206,7 @@ class PrintWidthSetting extends SliderSetting {
     }
 
     get value(): number {
-        return (this.plugin.settings.prettierOptions.printWidth as number) ?? 80;
+        return (this.plugin.settings.prettierOptions.printWidth as number) ?? this.default;
     }
 
     set value(val: number) {
