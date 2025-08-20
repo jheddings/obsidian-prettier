@@ -9,11 +9,10 @@ import { PrettierSettingsTab } from "./settings";
 const DEFAULT_SETTINGS: PrettierPluginSettings = {
     logLevel: LogLevel.ERROR,
     prettierOptions: {},
-    autoFormat: false,
     showNotices: true,
+    autoFormat: false,
+    autoFormatDebounceMs: 100,
 };
-
-const AUTO_FORMAT_DELAY_MS = 100;
 
 export default class PrettierPlugin extends Plugin {
     settings: PrettierPluginSettings;
@@ -93,7 +92,7 @@ export default class PrettierPlugin extends Plugin {
             const timeoutId = setTimeout(async () => {
                 this.autoFormatMap.delete(fileToFormat);
                 this.formatFileWithSuccessNotice(fileToFormat);
-            }, AUTO_FORMAT_DELAY_MS);
+            }, this.settings.autoFormatDebounceMs);
 
             this.autoFormatMap.set(fileToFormat, timeoutId);
         }

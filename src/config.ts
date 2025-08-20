@@ -13,8 +13,9 @@ export enum ProseWrapOptions {
 export interface PrettierPluginSettings {
     logLevel: LogLevel;
     prettierOptions: Options;
-    autoFormat: boolean;
     showNotices: boolean;
+    autoFormat: boolean;
+    autoFormatDebounceMs: number;
 }
 
 export class ConfigManager {
