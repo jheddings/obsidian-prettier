@@ -18,21 +18,30 @@ export interface PrettierPluginSettings {
     autoFormatDebounceMs: number;
 }
 
+const CONFIG_FILE_NAMES = [
+    ".prettierrc",
+    ".prettierrc.json",
+    ".prettierrc.yaml",
+    ".prettierrc.yml",
+    "prettier.json",
+    "prettier.yaml",
+    "prettier.yml",
+];
+
 export class ConfigManager {
     private app: App;
+
     private logger = Logger.getLogger("config");
 
     constructor(app: App) {
         this.app = app;
     }
 
-    async getEffectivePrettierOptions(userPrefs: Options): Promise<Options> {
-        const options = { ...userPrefs };
+    async getVaultConfig(): Promise<Options> {
+        const options = {};
 
         // look for vault files to override plugin settings
-        const localConfigFiles = [".prettierrc", ".prettierrc.json", "prettierrc.json"];
-
-        for (const localConfig of localConfigFiles) {
+        for (const localConfig of CONFIG_FILE_NAMES) {
             try {
                 const normPath = normalizePath(localConfig);
                 this.logger.debug(`Checking for local config :: ${normPath}`);
