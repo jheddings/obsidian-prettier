@@ -1,6 +1,6 @@
 // config.ts - config models for the Obsidian Prettier plugin
 
-import { App, normalizePath } from "obsidian";
+import { App, normalizePath, parseYaml } from "obsidian";
 import { Logger, LogLevel } from "./logger";
 import { Options } from "prettier";
 
@@ -20,12 +20,12 @@ export interface PrettierPluginSettings {
 
 const CONFIG_FILE_NAMES = [
     ".prettierrc",
-    ".prettierrc.json",
     ".prettierrc.yaml",
     ".prettierrc.yml",
-    "prettier.json",
+    ".prettierrc.json",
     "prettier.yaml",
     "prettier.yml",
+    "prettier.json",
 ];
 
 export class ConfigManager {
@@ -50,17 +50,29 @@ export class ConfigManager {
                 const exists = await this.app.vault.adapter.exists(normPath);
                 if (!exists) continue;
 
-                const configContent = await this.app.vault.adapter.read(normPath);
-                const configOptions = JSON.parse(configContent);
-                this.logger.debug(`Loaded Prettier config from ${localConfig}`);
-
+                const configOptions = await this.loadConfigFile(normPath);
                 Object.assign(options, configOptions);
             } catch (error) {
-                // config file doesn't exist or can't be read, continue to next
-                this.logger.debug(`Could not read config from ${localConfig}: ${error.message}`);
+                this.logger.warn(`Could not read config from ${localConfig}:`, error.message);
             }
         }
 
         return options;
+    }
+
+    private async loadConfigFile(vaultFilePath: string): Promise<Options> {
+        this.logger.debug("Loading config file:", vaultFilePath);
+
+        const configContent = await this.app.vault.adapter.read(vaultFilePath);
+
+        try {
+            return JSON.parse(configContent) as Options;
+        } catch {}
+
+        try {
+            return parseYaml(configContent) as Options;
+        } catch {}
+
+        throw Error("Invalid config format");
     }
 }
