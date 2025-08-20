@@ -10,9 +10,8 @@ const DEFAULT_SETTINGS: PrettierPluginSettings = {
     logLevel: LogLevel.ERROR,
     prettierOptions: {},
     autoFormat: false,
+    showNotices: true,
 };
-
-const AUTO_FORMAT_DELAY_MS = 2500;
 
 export default class PrettierPlugin extends Plugin {
     settings: PrettierPluginSettings;
@@ -21,7 +20,6 @@ export default class PrettierPlugin extends Plugin {
     private formatter: Formatter = new Formatter(this.app);
     private logger: Logger = Logger.getLogger("main");
 
-    private autoFormatMap: Map<TFile, NodeJS.Timeout> = new Map();
     private lastActiveFile: TFile | null = null;
 
     async onload() {
@@ -34,19 +32,9 @@ export default class PrettierPlugin extends Plugin {
             name: "Format current file with Prettier",
             editorCallback: async (_editor, _view) => {
                 const file = this.app.workspace.getActiveFile();
-                if (file) await this.formatFile(file);
+                if (file) await this.handleCommandCallback(file);
             },
         });
-
-        /*
-        this.registerEvent(
-            this.app.vault.on("modify", async (file) => {
-                if (file instanceof TFile && this.settings.autoFormat) {
-                    this.scheduleAutoFormat(file);
-                }
-            })
-        );
-        */
 
         this.registerEvent(
             this.app.workspace.on("active-leaf-change", async () => {
@@ -60,11 +48,6 @@ export default class PrettierPlugin extends Plugin {
     }
 
     async onunload() {
-        for (const [file, timeout] of this.autoFormatMap) {
-            clearTimeout(timeout);
-            await this.formatFile(file);
-        }
-
         this.logger.info("Plugin unloaded");
     }
 
@@ -95,39 +78,51 @@ export default class PrettierPlugin extends Plugin {
             const changed = await this.formatter.formatFile(file, prettierOptions);
 
             if (changed) {
-                new Notice(`Formatted ${file.name} with Prettier`);
                 this.logger.info(`File was changed: ${file.path}`);
             } else {
-                new Notice(`${file.name} is already formatted`);
                 this.logger.debug(`File was not changed: ${file.path}`);
             }
+
+            return changed;
         } catch (error) {
             const errorMessage = `Failed to format file: ${error.message}`;
             new Notice(errorMessage);
             this.logger.error(errorMessage, error);
+            throw error;
         }
     }
 
-    private scheduleAutoFormat(file: TFile) {
-        const existingTimeout = this.autoFormatMap.get(file);
-        if (existingTimeout) {
-            clearTimeout(existingTimeout);
-        }
+    private async handleCommandCallback(file: TFile) {
+        try {
+            const changed = await this.formatFile(file);
 
-        this.autoFormatMap.set(
-            file,
-            setTimeout(async () => {
-                this.autoFormatMap.delete(file);
-                await this.formatFile(file);
-            }, AUTO_FORMAT_DELAY_MS)
-        );
+            if (this.settings.showNotices) {
+                if (changed) {
+                    new Notice(`Formatted ${file.name} with Prettier`);
+                } else {
+                    new Notice(`${file.name} is already formatted`);
+                }
+            }
+        } catch {
+            // Error notice is already shown in formatFile
+        }
     }
 
     private async handleFocusChange() {
         const currentActiveFile = this.app.workspace.getActiveFile();
 
+        let changed = false;
+
         if (this.lastActiveFile && this.lastActiveFile !== currentActiveFile) {
-            await this.formatFile(this.lastActiveFile);
+            try {
+                changed = await this.formatFile(this.lastActiveFile);
+            } catch {
+                changed = false;
+            }
+        }
+
+        if (this.settings.showNotices && changed) {
+            new Notice(`Formatted ${this.lastActiveFile.name} with Prettier`);
         }
 
         this.lastActiveFile = currentActiveFile;

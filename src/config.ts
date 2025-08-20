@@ -14,6 +14,7 @@ export interface PrettierPluginSettings {
     logLevel: LogLevel;
     prettierOptions: Options;
     autoFormat: boolean;
+    showNotices: boolean;
 }
 
 export class ConfigManager {

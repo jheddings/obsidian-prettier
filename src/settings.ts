@@ -278,16 +278,42 @@ class AutoFormatSetting extends ToggleSetting {
     }
 
     get value(): boolean {
-        return (this.plugin.settings.prettierOptions.autoFormat as boolean) ?? this.default;
+        return this.plugin.settings.autoFormat ?? this.default;
     }
 
     set value(val: boolean) {
-        this.plugin.settings.prettierOptions.autoFormat = val;
+        this.plugin.settings.autoFormat = val;
         this.plugin.saveSettings();
     }
 
     get default(): boolean {
         return false;
+    }
+}
+
+/**
+ * Control the show notices user setting.
+ */
+class ShowNoticesSetting extends ToggleSetting {
+    constructor(private plugin: PrettierPlugin) {
+        super({
+            name: "Show notices",
+            description:
+                "Display notices after formatting. When disabled, notices are only shown for errors.",
+        });
+    }
+
+    get value(): boolean {
+        return this.plugin.settings.showNotices ?? this.default;
+    }
+
+    set value(val: boolean) {
+        this.plugin.settings.showNotices = val;
+        this.plugin.saveSettings();
+    }
+
+    get default(): boolean {
+        return true;
     }
 }
 
@@ -398,6 +424,7 @@ class AdvancedSettings extends SettingsTabPage {
      */
     display(containerEl: HTMLElement): void {
         new AutoFormatSetting(this._plugin).display(containerEl);
+        new ShowNoticesSetting(this._plugin).display(containerEl);
         new LogLevelSetting(this._plugin).display(containerEl);
     }
 }
