@@ -267,6 +267,32 @@ class ProseWrapSetting extends DropdownSetting<ProseWrapOptions> {
 }
 
 /**
+ * Controls the single quote user setting.
+ * https://prettier.io/docs/options.html#quotes
+ */
+class SingleQuoteSetting extends ToggleSetting {
+    constructor(private plugin: PrettierPlugin) {
+        super({
+            name: generatePrettierLink("Single quotes", "quotes"),
+            description: "Use single quotes instead of double quotes.",
+        });
+    }
+
+    get value(): boolean {
+        return (this.plugin.settings.prettierOptions.singleQuote as boolean) ?? this.default;
+    }
+
+    set value(val: boolean) {
+        this.plugin.settings.prettierOptions.singleQuote = val;
+        this.plugin.saveSettings();
+    }
+
+    get default(): boolean {
+        return false;
+    }
+}
+
+/**
  * Controls the auto format user setting.
  */
 class AutoFormatSetting extends ToggleSetting {
@@ -405,6 +431,7 @@ class GeneralSettings extends SettingsTabPage {
         new UseTabsSetting(this._plugin).display(containerEl);
         new PrintWidthSetting(this._plugin).display(containerEl);
         new ProseWrapSetting(this._plugin).display(containerEl);
+        new SingleQuoteSetting(this._plugin).display(containerEl);
     }
 }
 
