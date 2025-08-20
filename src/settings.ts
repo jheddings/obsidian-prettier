@@ -273,7 +273,7 @@ class ProseWrapSetting extends DropdownSetting<ProseWrapOptions> {
 class SingleQuoteSetting extends ToggleSetting {
     constructor(private plugin: PrettierPlugin) {
         super({
-            name: generatePrettierLink("Single quotes", "quote"),
+            name: generatePrettierLink("Single quotes", "quotes"),
             description: "Use single quotes instead of double quotes.",
         });
     }
