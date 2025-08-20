@@ -28,7 +28,7 @@ interface SettingConfig {
 /**
  * Base class for reusable setting elements.
  */
-abstract class BaseSetting<T = any> {
+abstract class BaseSetting<T> {
     protected name: string | DocumentFragment;
     protected description: string;
 
@@ -127,42 +127,6 @@ abstract class DropdownSetting<T> extends BaseSetting<T> {
         const option = this.options.find((opt) => opt.key === key);
         return option?.value ?? this.options[0]?.value;
     }
-}
-
-/**
- * Base class for settings tab pages.
- */
-abstract class SettingsTabPage {
-    public isActive: boolean = false;
-
-    protected _plugin: PrettierPlugin;
-    protected _name: string;
-
-    /**
-     * Creates a new SettingsTabPage instance.
-     */
-    constructor(plugin: PrettierPlugin, name: string) {
-        this._plugin = plugin;
-        this._name = name;
-    }
-
-    /**
-     * Gets the tab page ID.
-     * @returns The tab page ID string.
-     */
-    get id(): string {
-        return this._name.toLowerCase().replace(/\s+/g, "-");
-    }
-
-    /**
-     * Gets the tab page name.
-     * @returns The tab page name string.
-     */
-    get name(): string {
-        return this._name;
-    }
-
-    abstract display(containerEl: HTMLElement): void;
 }
 
 /**
@@ -299,9 +263,9 @@ class ProseWrapSetting extends DropdownSetting<ProseWrapOptions> {
     }
 
     get options(): { key: string; label: string; value: ProseWrapOptions }[] {
-        return Object.entries(ProseWrapOptions).map(([key, value]) => ({
+        return Object.entries(ProseWrapOptions).map(([_key, value]) => ({
             key: value,
-            label: key,
+            label: value,
             value,
         }));
     }
@@ -357,12 +321,50 @@ class LogLevelSetting extends DropdownSetting<LogLevel> {
     }
 
     get options(): { key: string; label: string; value: LogLevel }[] {
-        return Object.entries(LogLevel).map(([key, value]) => ({
-            key: value.toString(),
-            label: key,
-            value: value as LogLevel,
-        }));
+        return Object.entries(LogLevel)
+            .filter(([_key, value]) => typeof value === "number")
+            .map(([key, value]) => ({
+                key: key,
+                label: key,
+                value: value as LogLevel,
+            }));
     }
+}
+
+/**
+ * Base class for settings tab pages.
+ */
+abstract class SettingsTabPage {
+    public isActive: boolean = false;
+
+    protected _plugin: PrettierPlugin;
+    protected _name: string;
+
+    /**
+     * Creates a new SettingsTabPage instance.
+     */
+    constructor(plugin: PrettierPlugin, name: string) {
+        this._plugin = plugin;
+        this._name = name;
+    }
+
+    /**
+     * Gets the tab page ID.
+     * @returns The tab page ID string.
+     */
+    get id(): string {
+        return this._name.toLowerCase().replace(/\s+/g, "-");
+    }
+
+    /**
+     * Gets the tab page name.
+     * @returns The tab page name string.
+     */
+    get name(): string {
+        return this._name;
+    }
+
+    abstract display(containerEl: HTMLElement): void;
 }
 
 /**
