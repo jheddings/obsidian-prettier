@@ -1,8 +1,15 @@
 // settings.ts - settings UI for the Obsidian Prettier plugin
 
 import { App } from "obsidian";
-import { LogLevel, PluginSettingsTab, SettingsTabPage } from "obskit";
-import { DropdownSetting, SliderSetting, ToggleSetting } from "obskit";
+import {
+    LogLevel,
+    PluginSettingsTab,
+    SettingsTabPage,
+    DropdownSetting,
+    SliderSetting,
+    ToggleSetting,
+} from "obskit";
+
 import { ProseWrapOptions } from "./config";
 import PrettierPlugin from "./main";
 

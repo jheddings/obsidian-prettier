@@ -1,7 +1,7 @@
 // config.ts - config models for the Obsidian Prettier plugin
 
 import { App, normalizePath, parseYaml } from "obsidian";
-import { Logger, LogLevel } from "./logger";
+import { Logger, LogLevel } from "obskit";
 import { Options } from "prettier";
 
 export enum ProseWrapOptions {

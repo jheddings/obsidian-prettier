@@ -1,7 +1,7 @@
 // main.ts - main entry point for the Obsidian Prettier plugin
 
 import { Plugin, Notice, TFile } from "obsidian";
-import { Logger, LogLevel } from "./logger";
+import { Logger, LogLevel } from "obskit";
 import { Formatter } from "./format";
 import { ConfigManager, PrettierPluginSettings } from "./config";
 import { PrettierSettingsTab } from "./settings";
