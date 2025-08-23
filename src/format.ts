@@ -11,7 +11,7 @@ import * as parserYaml from "prettier/plugins/yaml";
 import * as parserEstree from "prettier/plugins/estree";
 
 import { App, TFile } from "obsidian";
-import { Logger } from "./logger";
+import { Logger } from "obskit";
 
 export class Formatter {
     private app: App;
