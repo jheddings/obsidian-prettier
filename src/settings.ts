@@ -1,10 +1,10 @@
 // settings.ts - settings UI for the Obsidian Prettier plugin
 
-import { PluginSettingTab, App } from "obsidian";
-import { LogLevel } from "./logger";
+import { App } from "obsidian";
+import { LogLevel, PluginSettingsTab, SettingsTabPage } from "obskit";
+import { DropdownSetting, SliderSetting, ToggleSetting } from "obskit";
 import { ProseWrapOptions } from "./config";
 import PrettierPlugin from "./main";
-import { DropdownSetting, SliderSetting, ToggleSetting } from "obskit";
 
 function generateLinkElement(name: string, docUrl: string): DocumentFragment {
     const fragment = document.createDocumentFragment();
@@ -271,59 +271,22 @@ class LogLevelSetting extends DropdownSetting<LogLevel> {
 }
 
 /**
- * Base class for settings tab pages.
- */
-abstract class SettingsTabPage {
-    public isActive: boolean = false;
-
-    protected _plugin: PrettierPlugin;
-    protected _name: string;
-
-    /**
-     * Creates a new SettingsTabPage instance.
-     */
-    constructor(plugin: PrettierPlugin, name: string) {
-        this._plugin = plugin;
-        this._name = name;
-    }
-
-    /**
-     * Gets the tab page ID.
-     */
-    get id(): string {
-        return this._name.toLowerCase().replace(/\s+/g, "-");
-    }
-
-    /**
-     * Gets the tab page name.
-     */
-    get name(): string {
-        return this._name;
-    }
-
-    abstract display(containerEl: HTMLElement): void;
-}
-
-/**
  * Settings page for general options.
  */
 class GeneralSettings extends SettingsTabPage {
-    /**
-     * Creates a new GeneralSettings instance.
-     */
-    constructor(plugin: PrettierPlugin) {
-        super(plugin, "General");
+    constructor(private plugin: PrettierPlugin) {
+        super("General");
     }
 
     /**
      * Displays the general settings UI.
      */
     display(containerEl: HTMLElement): void {
-        new TabWidthSetting(this._plugin).display(containerEl);
-        new UseTabsSetting(this._plugin).display(containerEl);
-        new PrintWidthSetting(this._plugin).display(containerEl);
-        new ProseWrapSetting(this._plugin).display(containerEl);
-        new SingleQuoteSetting(this._plugin).display(containerEl);
+        new TabWidthSetting(this.plugin).display(containerEl);
+        new UseTabsSetting(this.plugin).display(containerEl);
+        new PrintWidthSetting(this.plugin).display(containerEl);
+        new ProseWrapSetting(this.plugin).display(containerEl);
+        new SingleQuoteSetting(this.plugin).display(containerEl);
     }
 }
 
@@ -331,84 +294,24 @@ class GeneralSettings extends SettingsTabPage {
  * Settings page for advanced options.
  */
 class AdvancedSettings extends SettingsTabPage {
-    /**
-     * Creates a new AdvancedSettings instance.
-     */
-    constructor(plugin: PrettierPlugin) {
-        super(plugin, "Advanced");
+    constructor(private plugin: PrettierPlugin) {
+        super("Advanced");
     }
 
     /**
      * Displays the advanced settings UI.
      */
     display(containerEl: HTMLElement): void {
-        new AutoFormatSetting(this._plugin).display(containerEl);
-        new ShowNoticesSetting(this._plugin).display(containerEl);
-        new LogLevelSetting(this._plugin).display(containerEl);
+        new AutoFormatSetting(this.plugin).display(containerEl);
+        new ShowNoticesSetting(this.plugin).display(containerEl);
+        new LogLevelSetting(this.plugin).display(containerEl);
     }
 }
 
-export class PrettierSettingsTab extends PluginSettingTab {
-    private tabs: SettingsTabPage[];
-
+export class PrettierSettingsTab extends PluginSettingsTab {
     constructor(app: App, plugin: PrettierPlugin) {
         super(app, plugin);
 
-        this.tabs = [new GeneralSettings(plugin), new AdvancedSettings(plugin)];
-    }
-
-    /**
-     * Displays the settings tab UI.
-     */
-    display(): void {
-        const { containerEl } = this;
-        containerEl.empty();
-
-        const tabContainer = containerEl.createEl("div", {
-            cls: "prettier-settings-tab-container",
-        });
-
-        const tabContentDiv = containerEl.createEl("div");
-
-        this.tabs.forEach((tab) => {
-            const tabEl = tabContainer.createEl("button", {
-                text: tab.name,
-                cls: "prettier-settings-tab-button",
-            });
-
-            tabEl.addEventListener("click", () => {
-                tabContentDiv.empty();
-
-                this.tabs.forEach((jtab) => {
-                    jtab.isActive = jtab.id === tab.id;
-                });
-
-                this.updateTabButtonStyles(tabContainer);
-
-                tab.display(tabContentDiv);
-            });
-        });
-
-        // show the first tab to start off
-        this.tabs[0].isActive = true;
-        this.tabs[0].display(tabContentDiv);
-
-        this.updateTabButtonStyles(tabContainer);
-    }
-
-    /**
-     * Updates the styles for the tab buttons.
-     */
-    private updateTabButtonStyles(tabContainer: HTMLElement): void {
-        const tabButtons = tabContainer.querySelectorAll(".prettier-settings-tab-button");
-
-        tabButtons.forEach((button, index) => {
-            const tab = this.tabs[index];
-            if (tab && tab.isActive) {
-                button.addClass("prettier-settings-tab-button-active");
-            } else {
-                button.removeClass("prettier-settings-tab-button-active");
-            }
-        });
+        this.addTabs([new GeneralSettings(plugin), new AdvancedSettings(plugin)]);
     }
 }
