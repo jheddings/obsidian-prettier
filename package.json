@@ -9,6 +9,8 @@
         "prepare": "husky",
         "dev": "node esbuild.config.mjs",
         "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+        "clean": "rm -f main.js",
+        "clobber": "npm run clean && rm -f data.json && rm -rf node_modules",
         "lint": "eslint src",
         "lint:fix": "eslint src --fix",
         "format": "prettier --write .",
