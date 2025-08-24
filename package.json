@@ -1,6 +1,6 @@
 {
     "name": "obsidian-prettier",
-    "version": "0.2.1",
+    "version": "1.0.0",
     "description": "Format vault contents using Prettier.",
     "author": "Jason Heddings",
     "license": "MIT",
