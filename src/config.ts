@@ -10,6 +10,41 @@ export enum ProseWrapOptions {
     PRESERVE = "preserve",
 }
 
+export enum EndOfLineOptions {
+    LF = "lf",
+    CRLF = "crlf",
+    CR = "cr",
+    AUTO = "auto",
+}
+
+export enum EmbeddedLanguageFormattingOptions {
+    AUTO = "auto",
+    OFF = "off",
+}
+
+export enum HtmlWhitespaceSensitivityOptions {
+    CSS = "css",
+    STRICT = "strict",
+    IGNORE = "ignore",
+}
+
+export enum TrailingCommaOptions {
+    NONE = "none",
+    ES5 = "es5",
+    ALL = "all",
+}
+
+export enum ArrowParensOptions {
+    ALWAYS = "always",
+    AVOID = "avoid",
+}
+
+export enum QuotePropsOptions {
+    AS_NEEDED = "as-needed",
+    CONSISTENT = "consistent",
+    PRESERVE = "preserve",
+}
+
 export interface PrettierPluginSettings {
     logLevel: LogLevel;
     showNotices: boolean;
