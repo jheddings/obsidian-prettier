@@ -1,7 +1,6 @@
 // settings.ts - settings UI for the Obsidian Prettier plugin
 
 import { App } from "obsidian";
-
 import {
     LogLevel,
     PluginSettingsTab,
@@ -12,15 +11,14 @@ import {
 } from "obskit";
 
 import {
-    ArrowParensOptions,
-    EmbeddedLanguageFormattingOptions,
-    EndOfLineOptions,
-    HtmlWhitespaceSensitivityOptions,
     ProseWrapOptions,
-    QuotePropsOptions,
+    EmbeddedLanguageFormattingOptions,
+    HtmlWhitespaceSensitivityOptions,
     TrailingCommaOptions,
+    ArrowParensOptions,
+    QuotePropsOptions,
+    EndOfLineOptions,
 } from "./config";
-
 import PrettierPlugin from "./main";
 
 function generateLinkElement(name: string, docUrl: string): DocumentFragment {
@@ -39,9 +37,13 @@ function generatePrettierLink(name: string, option: string): DocumentFragment {
     return generateLinkElement(name, `https://prettier.io/docs/en/options.html#${option}`);
 }
 
+// ====================================================================
+// FORMATTING SETTINGS
+// ====================================================================
+
 /**
  * Control the tab width user setting.
- * https://prettier.io/docs/options#tab-width
+ * https://prettier.io/docs/options.html#tab-width
  */
 class TabWidthSetting extends SliderSetting {
     constructor(private plugin: PrettierPlugin) {
@@ -78,7 +80,7 @@ class TabWidthSetting extends SliderSetting {
 }
 
 /**
- * Control the use-tab user setting.
+ * Control the use-tabs user setting.
  * https://prettier.io/docs/options.html#tabs
  */
 class UseTabsSetting extends ToggleSetting {
@@ -104,7 +106,7 @@ class UseTabsSetting extends ToggleSetting {
 }
 
 /**
- * Controls the print width user setting.
+ * Control the print width user setting.
  * https://prettier.io/docs/options.html#print-width
  */
 class PrintWidthSetting extends SliderSetting {
@@ -142,37 +144,92 @@ class PrintWidthSetting extends SliderSetting {
 }
 
 /**
- * Control the end of line setting.
- * https://prettier.io/docs/options.html#end-of-line
+ * Control the single quote user setting.
+ * https://prettier.io/docs/options.html#quotes
  */
-class EndOfLineSetting extends DropdownSetting<EndOfLineOptions> {
+class SingleQuoteSetting extends ToggleSetting {
     constructor(private plugin: PrettierPlugin) {
         super({
-            name: generatePrettierLink("Line endings", "end-of-line"),
-            description: "Specify the line ending style to use.",
+            name: generatePrettierLink("Single quotes", "quotes"),
+            description: "Use single quotes instead of double quotes.",
         });
     }
 
-    get default(): EndOfLineOptions {
-        return EndOfLineOptions.LF;
+    get value(): boolean {
+        return (this.plugin.settings.prettierOptions.singleQuote as boolean) ?? this.default;
     }
 
-    get value(): EndOfLineOptions {
-        return (this.plugin.settings.prettierOptions.endOfLine as EndOfLineOptions) ?? this.default;
-    }
-
-    set value(val: EndOfLineOptions) {
-        this.plugin.settings.prettierOptions.endOfLine = val;
+    set value(val: boolean) {
+        this.plugin.settings.prettierOptions.singleQuote = val;
         this.plugin.saveSettings();
     }
 
-    get options(): { key: string; label: string; value: EndOfLineOptions }[] {
-        return [
-            { key: "lf", label: "LF (Unix/Linux/macOS)", value: EndOfLineOptions.LF },
-            { key: "crlf", label: "CRLF (Windows)", value: EndOfLineOptions.CRLF },
-            { key: "cr", label: "CR (Classic Mac)", value: EndOfLineOptions.CR },
-            { key: "auto", label: "Auto (Maintain existing)", value: EndOfLineOptions.AUTO },
-        ];
+    get default(): boolean {
+        return false;
+    }
+}
+
+/**
+ * Control the bracket spacing setting.
+ * https://prettier.io/docs/options.html#bracket-spacing
+ */
+class BracketSpacingSetting extends ToggleSetting {
+    constructor(private plugin: PrettierPlugin) {
+        super({
+            name: generatePrettierLink("Bracket spacing", "bracket-spacing"),
+            description: "Print spaces between brackets in object literals.",
+        });
+    }
+
+    get value(): boolean {
+        return (this.plugin.settings.prettierOptions.bracketSpacing as boolean) ?? this.default;
+    }
+
+    set value(val: boolean) {
+        this.plugin.settings.prettierOptions.bracketSpacing = val;
+        this.plugin.saveSettings();
+    }
+
+    get default(): boolean {
+        return true;
+    }
+}
+
+// ====================================================================
+// MARKDOWN SETTINGS
+// ====================================================================
+
+/**
+ * Control the prose wrap setting.
+ * https://prettier.io/docs/options.html#prose-wrap
+ */
+class ProseWrapSetting extends DropdownSetting<ProseWrapOptions> {
+    constructor(private plugin: PrettierPlugin) {
+        super({
+            name: generatePrettierLink("Prose wrap", "prose-wrap"),
+            description: "How to wrap prose (markdown text).",
+        });
+    }
+
+    get default(): ProseWrapOptions {
+        return ProseWrapOptions.PRESERVE;
+    }
+
+    get value(): ProseWrapOptions {
+        return (this.plugin.settings.prettierOptions.proseWrap as ProseWrapOptions) ?? this.default;
+    }
+
+    set value(val: ProseWrapOptions) {
+        this.plugin.settings.prettierOptions.proseWrap = val;
+        this.plugin.saveSettings();
+    }
+
+    get options(): { key: string; label: string; value: ProseWrapOptions }[] {
+        return Object.entries(ProseWrapOptions).map(([_key, value]) => ({
+            key: value,
+            label: value,
+            value,
+        }));
     }
 }
 
@@ -328,91 +385,9 @@ class InsertPragmaSetting extends ToggleSetting {
     }
 }
 
-/**
- * Control the bracket spacing setting.
- * https://prettier.io/docs/options.html#bracket-spacing
- */
-class BracketSpacingSetting extends ToggleSetting {
-    constructor(private plugin: PrettierPlugin) {
-        super({
-            name: generatePrettierLink("Bracket spacing", "bracket-spacing"),
-            description: "Print spaces between brackets in object literals.",
-        });
-    }
-
-    get value(): boolean {
-        return (this.plugin.settings.prettierOptions.bracketSpacing as boolean) ?? this.default;
-    }
-
-    set value(val: boolean) {
-        this.plugin.settings.prettierOptions.bracketSpacing = val;
-        this.plugin.saveSettings();
-    }
-
-    get default(): boolean {
-        return true;
-    }
-}
-
-/**
- * Controls the prose wrap setting.
- * https://prettier.io/docs/options.html#prose-wrap
- */
-class ProseWrapSetting extends DropdownSetting<ProseWrapOptions> {
-    constructor(private plugin: PrettierPlugin) {
-        super({
-            name: generatePrettierLink("Prose wrap", "prose-wrap"),
-            description: "How to wrap prose (markdown text).",
-        });
-    }
-
-    get default(): ProseWrapOptions {
-        return ProseWrapOptions.PRESERVE;
-    }
-
-    get value(): ProseWrapOptions {
-        return (this.plugin.settings.prettierOptions.proseWrap as ProseWrapOptions) ?? this.default;
-    }
-
-    set value(val: ProseWrapOptions) {
-        this.plugin.settings.prettierOptions.proseWrap = val;
-        this.plugin.saveSettings();
-    }
-
-    get options(): { key: string; label: string; value: ProseWrapOptions }[] {
-        return [
-            { key: "always", label: "Always", value: ProseWrapOptions.ALWAYS },
-            { key: "never", label: "Never", value: ProseWrapOptions.NEVER },
-            { key: "preserve", label: "Preserve", value: ProseWrapOptions.PRESERVE },
-        ];
-    }
-}
-
-/**
- * Controls the single quote user setting.
- * https://prettier.io/docs/options.html#quotes
- */
-class SingleQuoteSetting extends ToggleSetting {
-    constructor(private plugin: PrettierPlugin) {
-        super({
-            name: generatePrettierLink("Single quotes", "quotes"),
-            description: "Use single quotes instead of double quotes.",
-        });
-    }
-
-    get value(): boolean {
-        return (this.plugin.settings.prettierOptions.singleQuote as boolean) ?? this.default;
-    }
-
-    set value(val: boolean) {
-        this.plugin.settings.prettierOptions.singleQuote = val;
-        this.plugin.saveSettings();
-    }
-
-    get default(): boolean {
-        return false;
-    }
-}
+// ====================================================================
+// CODE BLOCK SETTINGS
+// ====================================================================
 
 /**
  * Control the trailing comma setting.
@@ -427,7 +402,7 @@ class TrailingCommaSetting extends DropdownSetting<TrailingCommaOptions> {
     }
 
     get default(): TrailingCommaOptions {
-        return TrailingCommaOptions.ES5;
+        return TrailingCommaOptions.ALL;
     }
 
     get value(): TrailingCommaOptions {
@@ -549,8 +524,51 @@ class SemiSetting extends ToggleSetting {
     }
 }
 
+// ====================================================================
+// FILE SETTINGS
+// ====================================================================
+
 /**
- * Controls the auto format user setting.
+ * Control the end of line setting.
+ * https://prettier.io/docs/options.html#end-of-line
+ */
+class EndOfLineSetting extends DropdownSetting<EndOfLineOptions> {
+    constructor(private plugin: PrettierPlugin) {
+        super({
+            name: generatePrettierLink("End of line", "end-of-line"),
+            description: "Specify the line ending style to use.",
+        });
+    }
+
+    get default(): EndOfLineOptions {
+        return EndOfLineOptions.LF;
+    }
+
+    get value(): EndOfLineOptions {
+        return (this.plugin.settings.prettierOptions.endOfLine as EndOfLineOptions) ?? this.default;
+    }
+
+    set value(val: EndOfLineOptions) {
+        this.plugin.settings.prettierOptions.endOfLine = val;
+        this.plugin.saveSettings();
+    }
+
+    get options(): { key: string; label: string; value: EndOfLineOptions }[] {
+        return [
+            { key: "lf", label: "LF (Unix/Linux/macOS)", value: EndOfLineOptions.LF },
+            { key: "crlf", label: "CRLF (Windows)", value: EndOfLineOptions.CRLF },
+            { key: "cr", label: "CR (Classic Mac)", value: EndOfLineOptions.CR },
+            { key: "auto", label: "Auto (Maintain existing)", value: EndOfLineOptions.AUTO },
+        ];
+    }
+}
+
+// ====================================================================
+// PLUGIN SETTINGS
+// ====================================================================
+
+/**
+ * Control the auto format user setting.
  */
 class AutoFormatSetting extends ToggleSetting {
     constructor(private plugin: PrettierPlugin) {
@@ -634,6 +652,10 @@ class LogLevelSetting extends DropdownSetting<LogLevel> {
         ];
     }
 }
+
+// ====================================================================
+// TAB PAGES
+// ====================================================================
 
 /**
  * Settings page for formatting options.
@@ -728,6 +750,9 @@ class PluginSettings extends SettingsTabPage {
     }
 }
 
+/**
+ * Settings tab for the Prettier plugin.
+ */
 export class PrettierSettingsTab extends PluginSettingsTab {
     constructor(app: App, plugin: PrettierPlugin) {
         super(app, plugin);

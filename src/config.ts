@@ -10,13 +10,6 @@ export enum ProseWrapOptions {
     PRESERVE = "preserve",
 }
 
-export enum EndOfLineOptions {
-    LF = "lf",
-    CRLF = "crlf",
-    CR = "cr",
-    AUTO = "auto",
-}
-
 export enum EmbeddedLanguageFormattingOptions {
     AUTO = "auto",
     OFF = "off",
@@ -43,6 +36,13 @@ export enum QuotePropsOptions {
     AS_NEEDED = "as-needed",
     CONSISTENT = "consistent",
     PRESERVE = "preserve",
+}
+
+export enum EndOfLineOptions {
+    LF = "lf",
+    CRLF = "crlf",
+    CR = "cr",
+    AUTO = "auto",
 }
 
 export interface PrettierPluginSettings {
