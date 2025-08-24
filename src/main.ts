@@ -8,7 +8,6 @@ import { PrettierSettingsTab } from "./settings";
 
 const DEFAULT_SETTINGS: PrettierPluginSettings = {
     logLevel: LogLevel.ERROR,
-    prettierOptions: {},
     showNotices: true,
     autoFormat: false,
     autoFormatDebounceMs: 100,
@@ -58,12 +57,6 @@ export default class PrettierPlugin extends Plugin {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
         this.applySettings();
-
-        const prettierOptions = await this.configManager.getVaultConfig();
-
-        if (prettierOptions) {
-            Object.assign(this.settings.prettierOptions, prettierOptions);
-        }
     }
 
     async saveSettings() {
@@ -118,7 +111,8 @@ export default class PrettierPlugin extends Plugin {
         this.logger.debug(`Applying format to file: ${file.path}`);
 
         try {
-            const changed = await this.formatter.formatFile(file, this.settings.prettierOptions);
+            const prettierOptions = await this.configManager.getVaultConfig();
+            const changed = await this.formatter.formatFile(file, prettierOptions);
 
             if (changed) {
                 this.logger.info(`File was changed: ${file.path}`);
