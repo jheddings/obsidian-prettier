@@ -26,7 +26,7 @@ Place any of these files in your vault root to configure formatting:
 
 ### Plugin Settings
 
-The plugin provides an extensive settings interface organized into five tabs:
+Several key options are also available in the UI.
 
 #### Formatting
 
