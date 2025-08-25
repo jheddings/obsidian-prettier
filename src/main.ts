@@ -70,9 +70,12 @@ export default class PrettierPlugin extends Plugin {
     }
 
     private scheduleAutoFormat(file: TFile) {
+        this.logger.debug(`Scheduling auto-format for file: ${file.path}`);
+
         const timeoutId = setTimeout(async () => {
             this.autoFormatMap.delete(file);
             this.formatFileWithSuccessNotice(file);
+            this.logger.debug(`Auto-format completed for file: ${file.path}`);
         }, this.settings.autoFormatDebounceMs);
 
         this.autoFormatMap.set(file, timeoutId);
@@ -84,6 +87,7 @@ export default class PrettierPlugin extends Plugin {
             clearTimeout(timeout);
             await this.formatFile(file);
         }
+        this.autoFormatMap.clear();
     }
 
     private handleFocusChange() {
@@ -95,19 +99,28 @@ export default class PrettierPlugin extends Plugin {
             const existingTimeout = this.autoFormatMap.get(currentActiveFile);
             if (existingTimeout) {
                 clearTimeout(existingTimeout);
+                this.logger.debug(
+                    `Cleared auto-format timeout for file: ${currentActiveFile.path}`
+                );
             }
         }
 
+        const isMarkdownFile = ["md", "mdx"].includes(this.lastActiveFile?.extension || "");
+        const didFileChange = this.lastActiveFile !== currentActiveFile;
+
         // only process when we're switching from one file to another (not just initial load)
-        if (this.lastActiveFile && this.lastActiveFile !== currentActiveFile) {
-            const fileToFormat = this.lastActiveFile;
-            this.scheduleAutoFormat(fileToFormat);
+        if (this.lastActiveFile && didFileChange && isMarkdownFile) {
+            this.scheduleAutoFormat(this.lastActiveFile);
         }
 
         this.lastActiveFile = currentActiveFile;
     }
 
     private async formatFile(file: TFile) {
+        if (!this.app.vault.getFileByPath(file.path)) {
+            throw new Error(`File does not exist: ${file.path}`);
+        }
+
         this.logger.debug(`Applying format to file: ${file.path}`);
 
         const prettierOptions = await this.configManager.getVaultConfig();
