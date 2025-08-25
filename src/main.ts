@@ -110,8 +110,10 @@ export default class PrettierPlugin extends Plugin {
     private async formatFile(file: TFile) {
         this.logger.debug(`Applying format to file: ${file.path}`);
 
+        const prettierOptions = await this.configManager.getVaultConfig();
+        this.logger.debug("Prettier options:", prettierOptions);
+
         try {
-            const prettierOptions = await this.configManager.getVaultConfig();
             const changed = await this.formatter.formatFile(file, prettierOptions);
 
             if (changed) {
