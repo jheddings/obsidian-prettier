@@ -9,6 +9,7 @@ export interface PrettierPluginSettings {
     showNotices: boolean;
     autoFormat: boolean;
     autoFormatDebounceMs: number;
+    autoFormatExtensions: string[];
 }
 
 const CONFIG_FILE_NAMES = [
