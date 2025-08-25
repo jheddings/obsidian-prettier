@@ -4,53 +4,11 @@ import { App, normalizePath, parseYaml } from "obsidian";
 import { Logger, LogLevel } from "obskit";
 import { Options } from "prettier";
 
-export enum ProseWrapOptions {
-    ALWAYS = "always",
-    NEVER = "never",
-    PRESERVE = "preserve",
-}
-
-export enum EmbeddedLanguageFormattingOptions {
-    AUTO = "auto",
-    OFF = "off",
-}
-
-export enum HtmlWhitespaceSensitivityOptions {
-    CSS = "css",
-    STRICT = "strict",
-    IGNORE = "ignore",
-}
-
-export enum TrailingCommaOptions {
-    NONE = "none",
-    ES5 = "es5",
-    ALL = "all",
-}
-
-export enum ArrowParensOptions {
-    ALWAYS = "always",
-    AVOID = "avoid",
-}
-
-export enum QuotePropsOptions {
-    AS_NEEDED = "as-needed",
-    CONSISTENT = "consistent",
-    PRESERVE = "preserve",
-}
-
-export enum EndOfLineOptions {
-    LF = "lf",
-    CRLF = "crlf",
-    CR = "cr",
-    AUTO = "auto",
-}
-
 export interface PrettierPluginSettings {
     logLevel: LogLevel;
     showNotices: boolean;
     autoFormat: boolean;
     autoFormatDebounceMs: number;
-    prettierOptions: Options;
 }
 
 const CONFIG_FILE_NAMES = [
