@@ -6,6 +6,12 @@ import { Formatter } from "./format";
 import { ConfigManager, PrettierPluginSettings } from "./config";
 import { PrettierSettingsTab } from "./settings";
 
+interface FormatNotifications {
+    onModify?: string;
+    onUnchanged?: string;
+    onError?: string;
+}
+
 const DEFAULT_SETTINGS: PrettierPluginSettings = {
     logLevel: LogLevel.ERROR,
     showNotices: true,
@@ -34,7 +40,13 @@ export default class PrettierPlugin extends Plugin {
             name: "Format current file with Prettier",
             editorCallback: async (_editor, _view) => {
                 const file = this.app.workspace.getActiveFile();
-                if (file) await this.formatFileWithNotice(file);
+                if (file) {
+                    await this.formatFileWithNotice(file, {
+                        onModify: `Formatted ${file.name} with Prettier`,
+                        onUnchanged: `${file.name} is already formatted`,
+                        onError: `Failed to format ${file.name}`,
+                    });
+                }
             },
         });
 
@@ -75,7 +87,11 @@ export default class PrettierPlugin extends Plugin {
 
         const timeoutId = setTimeout(async () => {
             this.autoFormatMap.delete(file);
-            this.formatFileWithSuccessNotice(file);
+
+            this.formatFileWithNotice(file, {
+                onModify: `Formatted ${file.name} with Prettier`,
+            });
+
             this.logger.debug(`Auto-format completed for file: ${file.path}`);
         }, this.settings.autoFormatDebounceMs);
 
@@ -140,29 +156,29 @@ export default class PrettierPlugin extends Plugin {
 
             return changed;
         } catch (error) {
-            const errorMessage = `Failed to format file: ${error.message}`;
-            new Notice(errorMessage);
-            this.logger.error(errorMessage, error);
+            throw new Error(`Failed to format file: ${error.message}`);
         }
     }
 
-    private async formatFileWithNotice(file: TFile) {
-        const changed = await this.formatFile(file);
+    private async formatFileWithNotice(file: TFile, options: FormatNotifications) {
+        try {
+            const contentChanged = await this.formatFile(file);
 
-        if (this.settings.showNotices) {
-            if (changed) {
-                new Notice(`Formatted ${file.name} with Prettier`);
-            } else {
-                new Notice(`${file.name} is already formatted`);
+            if (this.settings.showNotices) {
+                if (contentChanged && options.onModify) {
+                    new Notice(options.onModify);
+                }
+                if (!contentChanged && options.onUnchanged) {
+                    new Notice(options.onUnchanged);
+                }
             }
-        }
-    }
+        } catch (err) {
+            const errorMessage = err.message || "Unknown error";
+            this.logger.error(`Failed to format file: ${errorMessage}`, err);
 
-    private async formatFileWithSuccessNotice(file: TFile) {
-        const changed = await this.formatFile(file);
-
-        if (this.settings.showNotices && changed) {
-            new Notice(`Formatted ${file.name} with Prettier`);
+            if (this.settings.showNotices && options.onError) {
+                new Notice(options.onError);
+            }
         }
     }
 }
