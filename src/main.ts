@@ -98,6 +98,18 @@ export default class PrettierPlugin extends Plugin {
         this.autoFormatMap.set(file, timeoutId);
     }
 
+    private clearAutoFormat(file: TFile) {
+        const existingTimeout = this.autoFormatMap.get(file);
+        if (!existingTimeout) {
+            return;
+        }
+
+        clearTimeout(existingTimeout);
+        this.autoFormatMap.delete(file);
+
+        this.logger.debug(`Cleared auto-format timeout for file: ${file.path}`);
+    }
+
     private async flushAutoFormatQueue() {
         this.logger.debug("Flushing auto-format queue");
         for (const [file, timeout] of this.autoFormatMap) {
@@ -113,13 +125,7 @@ export default class PrettierPlugin extends Plugin {
 
         // clear any pending auto-format requests for the current file
         if (currentActiveFile) {
-            const existingTimeout = this.autoFormatMap.get(currentActiveFile);
-            if (existingTimeout) {
-                clearTimeout(existingTimeout);
-                this.logger.debug(
-                    `Cleared auto-format timeout for file: ${currentActiveFile.path}`
-                );
-            }
+            this.clearAutoFormat(currentActiveFile);
         }
 
         // format the file that was last active (if available)
