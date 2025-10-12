@@ -1,6 +1,6 @@
 {
     "name": "obsidian-prettier",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Format vault contents using Prettier.",
     "author": "Jason Heddings",
     "license": "MIT",
@@ -26,20 +26,20 @@
         "plugin"
     ],
     "devDependencies": {
-        "@types/node": "^22.18.0",
-        "@typescript-eslint/eslint-plugin": "8.41.0",
-        "@typescript-eslint/parser": "8.41.0",
+        "@types/node": "^22.18.10",
+        "@typescript-eslint/eslint-plugin": "8.46.0",
+        "@typescript-eslint/parser": "8.46.0",
         "builtin-modules": "5.0.0",
-        "esbuild": "0.25.9",
-        "eslint": "^9.34.0",
+        "esbuild": "0.25.10",
+        "eslint": "^9.37.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-prettier": "^5.5.4",
         "husky": "^9.1.7",
-        "lint-staged": "^16.1.5",
+        "lint-staged": "^16.2.4",
         "obsidian": "latest",
         "prettier": "^3.6.2",
         "tslib": "2.8.1",
-        "typescript": "5.9.2"
+        "typescript": "5.9.3"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx,json,css,scss,md}": [
@@ -48,6 +48,6 @@
         ]
     },
     "dependencies": {
-        "obskit": "^1.4.1"
+        "obskit": "^1.4.2"
     }
 }
