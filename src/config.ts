@@ -47,7 +47,8 @@ export class ConfigManager {
                 const configOptions = await this.loadConfigFile(normPath);
                 Object.assign(options, configOptions);
             } catch (error) {
-                this.logger.warn(`Could not read config from ${localConfig}:`, error.message);
+                const message = error instanceof Error ? error.message : String(error);
+                this.logger.warn(`Could not read config from ${localConfig}:`, message);
             }
         }
 

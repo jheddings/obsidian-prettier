@@ -21,7 +21,7 @@ const DEFAULT_SETTINGS: PrettierPluginSettings = {
 };
 
 export default class PrettierPlugin extends Plugin {
-    settings: PrettierPluginSettings;
+    settings!: PrettierPluginSettings;
 
     private configManager: ConfigManager = new ConfigManager(this.app);
     private formatter: Formatter = new Formatter(this.app);
@@ -132,7 +132,9 @@ export default class PrettierPlugin extends Plugin {
         const fileExtension = this.lastActiveFile?.extension || "";
         const isMarkdownFile = this.settings.autoFormatExtensions.includes(fileExtension);
         const didFileChange = this.lastActiveFile !== currentActiveFile;
-        const fileExists = this.app.vault.getFileByPath(this.lastActiveFile?.path) !== null;
+        const fileExists =
+            this.lastActiveFile != null &&
+            this.app.vault.getFileByPath(this.lastActiveFile.path) !== null;
 
         if (this.lastActiveFile && didFileChange && isMarkdownFile && fileExists) {
             this.scheduleAutoFormat(this.lastActiveFile);
@@ -162,7 +164,8 @@ export default class PrettierPlugin extends Plugin {
 
             return changed;
         } catch (error) {
-            throw new Error(`Failed to format file: ${error.message}`);
+            const message = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to format file: ${message}`);
         }
     }
 
@@ -179,7 +182,7 @@ export default class PrettierPlugin extends Plugin {
                 }
             }
         } catch (err) {
-            const errorMessage = err.message || "Unknown error";
+            const errorMessage = err instanceof Error ? err.message : "Unknown error";
             this.logger.error(`Failed to format file: ${errorMessage}`, err);
 
             if (this.settings.showNotices && options.onError) {
